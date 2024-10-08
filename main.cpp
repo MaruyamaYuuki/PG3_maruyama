@@ -1,34 +1,63 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+#include <Windows.h>
 
-int GeneralWages(int n) {
-	int wages = 1072;
-	return(wages * n);
+
+typedef void(*PFunc)(bool);
+
+/*void DispResult(int* s) {
+	printf("%d秒待って実行されたよ\n", *s);
 }
 
-int RecursiveWages(int n) {
+void setTimeout(PFunc p, int second) {
+	Sleep(second * 1000);
 
-	if (n == 1) {
-		return(100);
+	p(&second);
+}*/
+
+void DispResult(bool isCorrect) {
+	if (isCorrect) {
+		printf("正解\n");
 	}
-
-	return (RecursiveWages(n - 1) * 2 - 50);
+	else {
+		printf("不正解\n");
+	}
 }
 
-void CompareWages(int n) {
-	int rResult, gResult;
-	rResult = RecursiveWages(n);
-	gResult = GeneralWages(n);
+void RollDiceAndJudge(PFunc p, int choice) {
+	// サイコロを振る
+	int diceRoll = rand() % 6 + 1;
 
-	printf("%d時間働いた場合\n一般的な資金体系 : %d\n再帰的な資金体系 : %d\n\n", n, gResult, rResult);
+	// サイコロの出目が奇数か偶数かを判定
+	bool isEven = (diceRoll % 2 == 0);
+
+	// ユーザーの選択が奇数か偶数かをチェック(1 : 奇数 2 : 偶数)
+	bool choiceEven = (choice == 2);
+
+	int second = 3;
+
+	Sleep(second * 1000);
+	DispResult(choiceEven == isEven);
+	printf("サイコロの出目 : %d", diceRoll);
 }
 
 int main() {
-	int n = 12;
-	for (int i = 1; i <= n; i++) {
-        CompareWages(i);
+	srand(static_cast<unsigned int>(time(0)));
+
+	PFunc p;
+	p = DispResult;
+	int choice;
+
+	printf("サイコロを振ります。奇数(1)か偶数(2)か当ててください: ");
+	scanf_s("%d", &choice);
+
+	if (choice != 1 && choice != 2) {
+		printf("無効な入力です\n");
+		return 1;
 	}
 
-
+	RollDiceAndJudge(p, choice);
 
 	return 0;
 }
