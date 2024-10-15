@@ -1,23 +1,19 @@
 #include <stdio.h>
+#include <functional>
+#include <Windows.h>
 #include <stdlib.h>
 #include <time.h>
-#include <Windows.h>
 
+typedef void (*PFunc)(bool);
 
-typedef void(*PFunc)(bool);
-
-/*void DispResult(int* s) {
-	printf("%d秒待って実行されたよ\n", *s);
-}
-
-void setTimeout(PFunc p, int second) {
+void SetTimeout(PFunc p, int second, bool isJudge) {
 	Sleep(second * 1000);
 
-	p(&second);
-}*/
+	p(isJudge);
+}
 
-void DispResult(bool isCorrect) {
-	if (isCorrect) {
+void DispResult(bool isJudge) {
+	if (isJudge) {
 		printf("正解\n");
 	}
 	else {
@@ -25,39 +21,62 @@ void DispResult(bool isCorrect) {
 	}
 }
 
-void RollDiceAndJudge(PFunc p, int choice) {
+void DiceJudge(PFunc p, int choice) {
 	// サイコロを振る
-	int diceRoll = rand() % 6 + 1;
+	int dice = rand() % 6 + 1;
 
 	// サイコロの出目が奇数か偶数かを判定
-	bool isEven = (diceRoll % 2 == 0);
-
-	// ユーザーの選択が奇数か偶数かをチェック(1 : 奇数 2 : 偶数)
-	bool choiceEven = (choice == 2);
-
-	int second = 3;
-
-	Sleep(second * 1000);
-	DispResult(choiceEven == isEven);
-	printf("サイコロの出目 : %d", diceRoll);
-}
-
-int main() {
-	srand(static_cast<unsigned int>(time(0)));
-
-	PFunc p;
-	p = DispResult;
-	int choice;
-
-	printf("サイコロを振ります。奇数(1)か偶数(2)か当ててください: ");
-	scanf_s("%d", &choice);
-
-	if (choice != 1 && choice != 2) {
-		printf("無効な入力です\n");
-		return 1;
+	bool isDiceRoll;
+	if (dice % 2 == 0) {
+		isDiceRoll = true;
+	}
+	else {
+		isDiceRoll = false;
 	}
 
-	RollDiceAndJudge(p, choice);
+	// ユーザーの選択が奇数か偶数かをチェック
+	bool isUserChoice = (choice == 2);
+	if (choice == 2) {
+		isUserChoice = true;
+	}
+	else {
+		isUserChoice = false;
+	}
+
+	int second = 3;
+	bool result = (isUserChoice == isDiceRoll);
+
+	SetTimeout(p, second, result);
+	printf("サイコロの出目 : %d", dice);
+}
+
+int main(int argc, const char *argv[]) {
+	// ダイスを振る(乱数の生成)
+	unsigned int currentTime = time(nullptr);
+	srand(currentTime);
+
+	// 入力
+	int choice;
+	std::function<void()> fx = [&choice]() {
+		while (true) {
+	    	printf("半(奇数)か丁(偶数)か（半なら1、丁なら2）\n");
+	    	scanf_s("%d", &choice);
+
+			if (choice == 1 || choice == 2) {
+				// 正しい入力
+				break;
+			}
+			else {
+				// 無効な入力の場合
+				printf("もう一度入力してください。\n");
+			}
+		}
+	};
+
+	fx();
+	PFunc p;
+	p = DispResult;
+	DiceJudge(p, choice);
 
 	return 0;
 }
