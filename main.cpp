@@ -1,50 +1,32 @@
-#include <stdio.h>
-#include <thread>
-#include <mutex>
-#include <condition_variable>
+#include <cstdio>
+#include <string>
+#include <chrono>
 
-std::mutex mtx;
-std::condition_variable cv;
-// 実行順序を管理する変数
-int turn = 1; 
-
-void Num1(int num) {
-    std::unique_lock<std::mutex> lock(mtx);
-    cv.wait(lock, [] { return turn == 1; });
-    num += 1;
-    printf("thread %d\n", num);
-    turn = 2;
-    cv.notify_all();
+void CopyTime(const std::string& src) {
+    auto start = std::chrono::high_resolution_clock::now(); 
+    std::string dest = src; 
+    // コピー
+    auto end = std::chrono::high_resolution_clock::now(); 
+    auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count(); 
+    printf("コピー: %lld ns\n", duration); 
 }
 
-void Num2(int num) {
-    std::unique_lock<std::mutex> lock(mtx);
-    cv.wait(lock, [] { return turn == 2; });
-    num += 2;
-    printf("thread %d\n", num);
-    turn = 3;
-    cv.notify_all();
-}
-
-void Num3(int num) {
-    std::unique_lock<std::mutex> lock(mtx);
-    cv.wait(lock, [] { return turn == 3; }); 
-    num += 3;
-    printf("thread %d\n", num);
-    turn = 1;
-    cv.notify_all();
+void MoveTime(std::string&& src) {
+    auto start = std::chrono::high_resolution_clock::now(); 
+    std::string dest = std::move(src); 
+    // 移動 
+    auto end = std::chrono::high_resolution_clock::now(); 
+    auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count(); 
+    printf("移動: %lld ns\n", duration); 
 }
 
 int main() {
-	int num = 0;
+    std::string a(10000, 'a'); // 10,000文字の文字列を作成
 
-	std::thread th1(Num1, num);
-	std::thread th2(Num2, num);
-	std::thread th3(Num3, num);
+    printf("100,000文字を移動とコピーで比較\n");
+    CopyTime(a);       // コピー時間を計測
+    MoveTime(std::move(a)); // 移動時間を計測
 
-	th1.join();
-	th2.join();
-	th3.join();
-
-	return 0; 
+    return 0;
 }
+
